@@ -26,7 +26,8 @@ const createWindow = () => {
           "style-src 'self' 'unsafe-inline' https://cdn.tiny.cloud; " +
           "img-src 'self' data: https://cdn.tiny.cloud https://sp.tinymce.com; " +
           "font-src 'self' https://cdn.tiny.cloud; " +
-          "connect-src 'self' https://cdn.tiny.cloud https://sp.tinymce.com"
+          "connect-src 'self' https://cdn.tiny.cloud https://sp.tinymce.com; " +
+          "media-src 'self'"
         ]
       }
     })
