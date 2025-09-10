@@ -10,6 +10,113 @@ const noteViewer = document.getElementById('noteViewer')
 const viewerContent = document.getElementById('viewerContent')
 const viewerTitle = document.getElementById('viewerTitle')
 const noteTitleInput = document.getElementById('noteTitle')
+const voiceButton = document.getElementById('voiceInput')
+
+// Speech recognition variables
+let recognition = null
+let isRecording = false
+
+// Initialize speech recognition if supported
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    recognition = new SpeechRecognition()
+    
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+    
+    recognition.onstart = () => {
+        isRecording = true
+        voiceButton.classList.add('recording')
+        voiceButton.textContent = '🔴 Recording...'
+        voiceButton.title = 'Click to stop recording'
+    }
+    
+    recognition.onresult = (event) => {
+        let transcript = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                transcript += event.results[i][0].transcript + ' '
+            }
+        }
+        
+        if (transcript.trim()) {
+            // Insert the transcript into TinyMCE editor
+            const editor = tinymce.get('noteContent')
+            if (editor) {
+                const currentContent = editor.getContent()
+                const newContent = currentContent + transcript
+                editor.setContent(newContent)
+                // Move cursor to the end
+                editor.selection.select(editor.getBody(), true)
+                editor.selection.collapse(false)
+            }
+        }
+    }
+    
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        stopRecording()
+        
+        let errorMessage = 'Voice input error: '
+        switch (event.error) {
+            case 'no-speech':
+                errorMessage += 'No speech detected. Please try again.'
+                break
+            case 'audio-capture':
+                errorMessage += 'Microphone not accessible. Please check permissions.'
+                break
+            case 'not-allowed':
+                errorMessage += 'Microphone access denied. Please allow microphone access.'
+                break
+            case 'network':
+                errorMessage += 'Network error. Please check your connection.'
+                break
+            default:
+                errorMessage += event.error
+        }
+        alert(errorMessage)
+    }
+    
+    recognition.onend = () => {
+        stopRecording()
+    }
+} else {
+    // Hide voice button if speech recognition is not supported
+    voiceButton.style.display = 'none'
+    console.warn('Speech recognition not supported in this browser')
+}
+
+function startRecording() {
+    if (!recognition) {
+        alert('Speech recognition is not supported in this browser')
+        return
+    }
+    
+    // Check if TinyMCE is initialized
+    const editor = tinymce.get('noteContent')
+    if (!editor) {
+        alert('Please wait for the editor to load before using voice input')
+        return
+    }
+    
+    try {
+        recognition.start()
+    } catch (error) {
+        console.error('Error starting speech recognition:', error)
+        alert('Could not start voice input. Please try again.')
+    }
+}
+
+function stopRecording() {
+    if (recognition && isRecording) {
+        recognition.stop()
+    }
+    isRecording = false
+    voiceButton.classList.remove('recording')
+    voiceButton.textContent = '🎤 Voice Input'
+    voiceButton.title = 'Click to start voice input'
+}
 
 // Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,3 +274,12 @@ ipcRenderer.on('save-error', (event, errorMessage) => {
     console.error('Save error:', errorMessage);
     alert('Error saving note: ' + errorMessage);
 });
+
+// Voice button event listener
+voiceButton.addEventListener('click', () => {
+    if (isRecording) {
+        stopRecording()
+    } else {
+        startRecording()
+    }
+})

@@ -147,6 +147,24 @@ body {
     background-color: #718096;
 }
 
+.voice-button {
+    background-color: #38a169;
+}
+
+.voice-button.recording {
+    background-color: #e53e3e;
+    animation: pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+    from {
+        background-color: #e53e3e;
+    }
+    to {
+        background-color: #fc8181;
+    }
+}
+
 .button:hover { 
     opacity: 0.9;
     transform: translateY(-1px);
